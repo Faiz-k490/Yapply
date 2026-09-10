@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yapply.dev/schemas/job.schema.json",
+  "title": "Yapply job",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "company", "role", "url", "location", "description", "captured_at"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "company": {"type": "string", "minLength": 1},
+    "role": {"type": "string", "minLength": 1},
+    "url": {"type": "string"},
+    "location": {"type": "string"},
+    "description": {"type": "string", "minLength": 1},
+    "captured_at": {"type": "string", "format": "date-time"}
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yapply.dev/schemas/profile.schema.json",
+  "title": "Yapply profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "identity", "preferences", "facts"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "email", "phone", "location", "links"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "email": {"type": "string", "minLength": 3},
+        "phone": {"type": "string"},
+        "location": {"type": "string"},
+        "links": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "preferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_roles", "target_locations", "work_authorization", "remote_preference"],
+      "properties": {
+        "target_roles": {"type": "array", "items": {"type": "string"}},
+        "target_locations": {"type": "array", "items": {"type": "string"}},
+        "work_authorization": {"type": "string"},
+        "remote_preference": {"enum": ["any", "remote", "hybrid", "onsite"]}
+      }
+    },
+    "facts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "category", "statement", "evidence", "keywords"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^fact-[a-z0-9][a-z0-9-]*$"},
+          "category": {"enum": ["experience", "project", "education", "skill", "award", "other"]},
+          "statement": {"type": "string", "minLength": 1},
+          "evidence": {"type": "string", "minLength": 1},
+          "keywords": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "yapply",
+  "displayName": "Yapply",
+  "version": "0.1.0",
+  "description": "A local-first, agent-native workflow for finding jobs, preparing grounded applications, and tracking outcomes.",
+  "author": {
+    "name": "Yapply"
+  },
+  "keywords": [
+    "careers",
+    "jobs",
+    "resume",
+    "applications"
+  ]
+}

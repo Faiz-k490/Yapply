@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yapply.dev/schemas/resume.schema.json",
+  "title": "Yapply tailored resume",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "summary", "skills", "sections"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "summary": {"$ref": "#/$defs/sourcedStatement"},
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "source_fact_ids"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "source_fact_ids": {"$ref": "#/$defs/sourceFactIds"}
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["heading", "items"],
+        "properties": {
+          "heading": {"type": "string", "minLength": 1},
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["title", "organization", "date_range", "source_fact_ids", "bullets"],
+              "properties": {
+                "title": {"type": "string", "minLength": 1},
+                "organization": {"type": "string"},
+                "date_range": {"type": "string"},
+                "source_fact_ids": {"$ref": "#/$defs/sourceFactIds"},
+                "bullets": {
+                  "type": "array",
+                  "items": {"$ref": "#/$defs/sourcedStatement"}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sourceFactIds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^fact-[a-z0-9][a-z0-9-]*$"}
+    },
+    "sourcedStatement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "source_fact_ids"],
+      "properties": {
+        "text": {"type": "string", "minLength": 1},
+        "source_fact_ids": {"$ref": "#/$defs/sourceFactIds"}
+      }
+    }
+  }
+}

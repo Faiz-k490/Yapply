@@ -1,0 +1,26 @@
+{
+  "name": "yapply",
+  "version": "0.1.0",
+  "description": "A local-first, agent-native workflow for finding jobs, preparing grounded applications, and tracking outcomes.",
+  "author": {
+    "name": "Yapply"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Yapply",
+    "shortDescription": "Run a private, agent-native job search.",
+    "longDescription": "Yapply helps people build a verified career profile, find suitable roles, prepare provenance-backed application materials, and track applications from Codex.",
+    "developerName": "Yapply",
+    "category": "Productivity",
+    "capabilities": [
+      "Local files",
+      "Job research",
+      "Application tracking"
+    ],
+    "defaultPrompt": [
+      "Set up my private Yapply workspace.",
+      "Prepare a grounded application for this role.",
+      "Show me the status of my applications."
+    ]
+  }
+}
