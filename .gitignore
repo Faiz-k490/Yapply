@@ -2,6 +2,9 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .DS_Store
+tmp/
+output/
+dist/
 
 # Never commit a Yapply user's private workspace into this plugin repository.
 .yapply/

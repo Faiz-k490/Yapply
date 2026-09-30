@@ -1,0 +1,268 @@
+<!doctype html>
+<!--
+  Source for the README banner and the GitHub social preview.
+  Same rules as the Yapply web app theme: the machine is 1-bit and monochrome,
+  color is spent only on status, and the résumé is the one real paper surface.
+
+  Render with scripts/render_brand_assets.sh, or open in a browser with
+  ?kind=banner|social|demo&theme=light|dark
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Yapply card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=block" rel="stylesheet">
+<style>
+  :root {
+    --void: #12141c;
+    --void-soft: #4a4f60;
+    --screen: #c9ccd6;
+    --panel: #e6e8ef;
+    --panel-hi: #f4f5f9;
+    --dither: rgba(18, 20, 28, 0.16);
+    --field: #ffffff;
+    --paper: #ffffff;
+    --go: #1f6b43;
+    --live: #2b4fd8;
+    --u: 4px;
+    --border: 2px;
+  }
+  .dark {
+    --void: #d8dbe4;
+    --void-soft: #8a90a3;
+    --screen: #0e1016;
+    --panel: #1c1f2a;
+    --panel-hi: #262a38;
+    --dither: rgba(216, 219, 228, 0.1);
+    --field: #262a38;
+    --paper: #f5f5f2;
+    --go: #58c98c;
+    --live: #7d9bff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    position: relative;
+    overflow: hidden;
+    color: var(--void);
+    background-color: var(--screen);
+    background-image:
+      linear-gradient(45deg, var(--dither) 25%, transparent 25%, transparent 75%, var(--dither) 75%),
+      linear-gradient(45deg, var(--dither) 25%, transparent 25%, transparent 75%, var(--dither) 75%);
+    background-size: 4px 4px;
+    background-position: 0 0, 2px 2px;
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .banner { width: 1280px; height: 440px; }
+  .social { width: 1280px; height: 640px; }
+  .demo { width: 1280px; height: 624px; }
+
+  .pixel {
+    font-family: "Silkscreen", "Courier New", monospace;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    -webkit-font-smoothing: none;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+  /* --- Menu bar ---------------------------------------------------------- */
+  .menubar {
+    position: absolute; inset: 0 0 auto 0; height: 32px;
+    display: flex; align-items: center; gap: 32px;
+    padding: 0 24px;
+    background: var(--panel-hi);
+    border-bottom: var(--border) solid var(--void);
+    font-size: 16px;
+  }
+  .menubar .spacer { flex: 1; }
+  .menubar .soft { color: var(--void-soft); }
+  .logo {
+    display: inline-grid; place-items: center;
+    width: 20px; height: 20px;
+    background: var(--void); color: var(--panel-hi);
+    font-size: 16px; line-height: 1;
+  }
+
+  /* --- Window (System 6) ------------------------------------------------- */
+  .window {
+    position: absolute;
+    background: var(--panel);
+    border: var(--border) solid var(--void);
+    box-shadow: inset 0 0 0 1px var(--panel-hi);
+  }
+  .bar {
+    display: flex; align-items: center; gap: 8px;
+    height: 28px; padding: 0 8px;
+    background: var(--panel-hi);
+    border-bottom: var(--border) solid var(--void);
+  }
+  .close { width: 14px; height: 14px; border: var(--border) solid var(--void); background: var(--panel-hi); flex: none; }
+  .stripes {
+    flex: 1; height: 11px; opacity: 0.55;
+    background: repeating-linear-gradient(to bottom, var(--void) 0 1px, transparent 1px 3px);
+  }
+  .bar .title { font-size: 16px; white-space: nowrap; }
+
+  .main .body { padding: 28px 32px; }
+  .wordmark { margin: 0; line-height: 1; }
+  .lede { margin: 0; font-weight: 600; color: var(--void); }
+  .sub { margin: 0; color: var(--void-soft); }
+  .chips { display: flex; flex-wrap: wrap; gap: 12px; }
+  .chip {
+    padding: 6px 12px 5px;
+    border: var(--border) solid var(--void);
+    background: var(--panel-hi);
+    font-size: 16px; line-height: 1;
+  }
+  .field {
+    border: var(--border) solid var(--void);
+    background: var(--field);
+    padding: 12px 16px;
+    font-size: 18px; line-height: 1.7;
+  }
+  .field .prompt { color: var(--void-soft); }
+  .cursor { display: inline-block; width: 11px; height: 20px; background: var(--live); vertical-align: -3px; }
+  .label { font-size: 16px; margin: 0 0 12px; }
+
+  /* --- The document: real paper, real type, no dither -------------------- */
+  .paper {
+    position: absolute;
+    background: var(--paper);
+    border: var(--border) solid var(--void);
+    color: #132238;
+    font-family: Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .paper h2 { margin: 0; text-align: center; font-weight: 700; letter-spacing: 0.01em; }
+  .paper .contact { text-align: center; color: #4b5563; }
+  .paper h3 { margin: 0; color: #1f5a94; font-weight: 700; letter-spacing: 0.02em; border-bottom: 1px solid #d7e2ec; }
+  .paper .item { display: flex; justify-content: space-between; font-weight: 700; }
+  .paper .item span { font-weight: 400; color: #4b5563; }
+  .paper .org { color: #4b5563; }
+  .paper ul { margin: 0; padding: 0; list-style: none; }
+  .paper li { padding-left: 10px; text-indent: -10px; }
+  .paper li::before { content: "- "; }
+
+  /* --- Validator dialog: the only chroma is status ----------------------- */
+  .dialog .body { padding: 16px 20px 18px; }
+  .row { display: flex; align-items: center; gap: 12px; }
+  .row + .row { margin-top: 10px; }
+  .ok { color: var(--go); flex: none; }
+  .verdict {
+    margin-top: 16px; padding-top: 14px;
+    border-top: var(--border) solid var(--void);
+    display: flex; align-items: center; gap: 12px;
+    color: var(--go);
+  }
+
+  /* --- Layout: banner 1280x440 ------------------------------------------ */
+  .banner .main  { left: 40px; top: 64px; width: 640px; height: 344px; }
+  .banner .wordmark { font-size: 72px; }
+  .banner .lede  { margin-top: 22px; font-size: 26px; line-height: 34px; }
+  .banner .sub   { margin-top: 8px; font-size: 18px; line-height: 27px; }
+  .banner .chips { margin-top: 26px; }
+  .banner .paper { left: 720px; top: 60px; width: 380px; height: 460px; padding: 26px 28px; }
+  .banner .dialog { left: 928px; top: 238px; width: 312px; }
+  .banner .install { display: none; }
+
+  /* --- Layout: framed demo output 1280x624 ----------------------------- */
+  .demo > :not(.pdf) { display: none; }
+  .pdf { display: none; left: 160px; top: 48px; width: 960px; }
+  .demo .pdf { display: block; }
+  .pdf img { display: block; width: 100%; background: var(--paper); }
+
+  /* --- Layout: social preview 1280x640 ---------------------------------- */
+  .social .main  { left: 48px; top: 72px; width: 680px; height: 528px; }
+  .social .main .body { padding: 36px 40px; }
+  .social .wordmark { font-size: 96px; }
+  .social .lede  { margin-top: 28px; font-size: 30px; line-height: 40px; }
+  .social .sub   { margin-top: 10px; font-size: 20px; line-height: 30px; }
+  .social .chips { margin-top: 28px; }
+  .social .install { margin-top: 32px; }
+  .social .paper { left: 772px; top: 72px; width: 420px; height: 620px; padding: 30px 32px; }
+  .social .dialog { left: 912px; top: 372px; width: 328px; }
+
+  .paper h2 { font-size: 24px; }
+  .paper .contact { font-size: 9px; margin-top: 4px; }
+  .paper h3 { font-size: 11px; padding-bottom: 3px; margin-top: 16px; }
+  .paper p, .paper li { font-size: 11px; line-height: 15px; margin: 6px 0 0; }
+  .paper .item { font-size: 11px; margin-top: 8px; }
+  .paper .org { font-size: 10px; }
+  .dialog .row { font-size: 15px; }
+  .dialog .verdict { font-size: 16px; }
+</style>
+</head>
+<body>
+<script>
+  const params = new URLSearchParams(location.search);
+  document.body.className = `${params.get("kind") || "banner"} ${params.get("theme") === "dark" ? "dark" : ""}`;
+</script>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="check" viewBox="0 0 7 5" shape-rendering="crispEdges">
+    <path fill="currentColor" d="M6 0h1v1H6zM5 1h1v1H5zM0 2h1v1H0zM4 2h1v1H4zM1 3h1v1H1zM3 3h1v1H3zM2 4h1v1H2z"/>
+  </symbol>
+</svg>
+
+<div class="menubar pixel">
+  <span class="logo">Y</span>
+  <span>Onboard</span><span>Find</span><span>Tailor</span><span>Track</span>
+  <span class="spacer"></span>
+  <span class="soft">Local</span>
+</div>
+
+<section class="window main">
+  <div class="bar"><span class="close"></span><span class="stripes"></span><span class="title pixel">Yapply</span><span class="stripes"></span></div>
+  <div class="body">
+    <h1 class="wordmark pixel">Yapply</h1>
+    <p class="lede">Your AI agent runs the job search.</p>
+    <p class="sub">Every résumé line cites a fact you verified. Your files stay in a local folder, with no Yapply server and no extra API key.</p>
+    <div class="chips pixel"><span class="chip">Claude Code</span><span class="chip">Codex</span><span class="chip">Open source</span></div>
+    <div class="install">
+      <p class="label pixel">Install in Claude Code</p>
+      <div class="field mono">
+        <div><span class="prompt">&gt;</span> /plugin marketplace add Faiz-k490/Yapply</div>
+        <div><span class="prompt">&gt;</span> /plugin install yapply@yapply <span class="cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<article class="paper" aria-label="Synthetic demo résumé">
+  <h2>Jordan Lee</h2>
+  <div class="contact">jordan.lee@example.test | Austin, TX | github.com/jordan-example</div>
+  <h3>SUMMARY</h3>
+  <p>Platform-focused engineer experienced in improving backend performance, automating delivery, and operating observable services.</p>
+  <h3>SELECTED EXPERIENCE</h3>
+  <div class="item">Backend Engineering Projects <span>2025 - 2026</span></div>
+  <div class="org">Synthetic Yapply Demo</div>
+  <ul>
+    <li>Reduced API p95 latency from 420 ms to 180 ms by profiling database queries and adding targeted indexes.</li>
+    <li>Built a GitHub Actions deployment pipeline with automated tests and rollback checks.</li>
+    <li>Created service dashboards and alerts for latency, error rate, and queue depth.</li>
+  </ul>
+  <h3>SKILLS</h3>
+  <p>Python &bull; PostgreSQL &bull; Docker &bull; AWS &bull; GitHub Actions</p>
+</article>
+
+<section class="window dialog">
+  <div class="bar"><span class="close"></span><span class="stripes"></span><span class="title pixel">Validate</span><span class="stripes"></span></div>
+  <div class="body">
+    <div class="row mono"><svg class="ok" width="21" height="15"><use href="#check"/></svg>fact-api-latency</div>
+    <div class="row mono"><svg class="ok" width="21" height="15"><use href="#check"/></svg>fact-deployment-pipeline</div>
+    <div class="row mono"><svg class="ok" width="21" height="15"><use href="#check"/></svg>fact-observability</div>
+    <div class="verdict pixel"><svg width="21" height="15"><use href="#check"/></svg>9/9 lines verified</div>
+  </div>
+</section>
+
+<section class="window pdf">
+  <div class="bar"><span class="close"></span><span class="stripes"></span><span class="title pixel">resume.pdf</span><span class="stripes"></span></div>
+  <img src="demo-resume-page.png" alt="">
+</section>
+</body>
+</html>

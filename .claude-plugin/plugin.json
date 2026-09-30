@@ -2,15 +2,23 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "yapply",
   "displayName": "Yapply",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A local-first, agent-native workflow for finding jobs, preparing grounded applications, and tracking outcomes.",
   "author": {
-    "name": "Yapply"
+    "name": "Yapply",
+    "url": "https://github.com/Faiz-k490/Yapply"
   },
+  "homepage": "https://github.com/Faiz-k490/Yapply",
+  "repository": "https://github.com/Faiz-k490/Yapply",
+  "license": "MIT",
   "keywords": [
     "careers",
     "jobs",
+    "internships",
     "resume",
-    "applications"
+    "applications",
+    "job-search",
+    "local-first",
+    "privacy"
   ]
 }

@@ -1,0 +1,22 @@
+name: Feature request
+description: Suggest something Yapply should do.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the job-search task, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+  - type: checkboxes
+    id: principles
+    attributes:
+      label: Fits Yapply's principles
+      options:
+        - label: It keeps career data in the local `.yapply/` workspace.
+        - label: It doesn't let unverified claims onto a résumé.

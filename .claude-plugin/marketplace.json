@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "yapply",
+  "owner": {
+    "name": "Yapply"
+  },
+  "metadata": {
+    "description": "Yapply: a private, agent-native job search for Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "yapply",
+      "source": "./",
+      "description": "A local-first, agent-native workflow for finding jobs, preparing grounded applications, and tracking outcomes.",
+      "category": "productivity",
+      "homepage": "https://github.com/Faiz-k490/Yapply"
+    }
+  ]
+}

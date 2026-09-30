@@ -15,11 +15,12 @@ import urllib.request
 import uuid
 from collections import Counter
 from datetime import datetime, timezone
+from html import escape
 from pathlib import Path
 from typing import Any
 
 
-PLUGIN_VERSION = "0.1.0"
+PLUGIN_VERSION = "0.2.0"
 SCHEMA_VERSION = 1
 WORKSPACE_DIR = ".yapply"
 STATUSES = (
@@ -43,11 +44,24 @@ EVENT_PROPERTIES = {
     "application_created": {"outcome"},
     "application_validated": {"outcome", "statement_count_bucket", "error_count_bucket"},
     "application_status_changed": {"outcome", "from_status", "to_status"},
+    "resume_rendered": {"outcome"},
 }
 
 
 class YapplyError(RuntimeError):
     """Expected user-facing error."""
+
+
+def require_reportlab() -> None:
+    """Fail before any work is done when PDF rendering cannot succeed."""
+    try:
+        import reportlab  # noqa: F401
+    except ImportError as exc:
+        raise YapplyError(
+            "PDF rendering requires ReportLab, which is not installed for this Python. "
+            f"Install it with '{sys.executable} -m pip install \"reportlab>=4,<5\"' "
+            "and run the command again."
+        ) from exc
 
 
 def utc_now() -> str:
@@ -513,6 +527,363 @@ def validate_application(root: Path, slug: str) -> tuple[list[str], int]:
     return errors, statement_count
 
 
+def render_resume(root: Path, slug: str, output: Path | None = None) -> Path:
+    """Render a validated application resume to a polished PDF."""
+    slug = validate_slug(slug)
+    errors, _ = validate_application(root, slug)
+    if errors:
+        preview = "; ".join(errors[:8])
+        if len(errors) > 8:
+            preview += f"; and {len(errors) - 8} more"
+        record_event(root, "resume_rendered", {"outcome": "failure"})
+        raise YapplyError(f"Application must validate before rendering: {preview}")
+
+    require_reportlab()
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    from reportlab.lib.pagesizes import LETTER
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import inch
+    from reportlab.platypus import (
+        KeepTogether,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
+    )
+
+    base = require_workspace(root)
+    app_dir = base / "applications" / slug
+    profile = read_json(base / "profile.json")
+    resume = read_json(app_dir / "resume.json")
+    identity = profile["identity"]
+
+    if output is None:
+        output_path = app_dir / "output" / "resume.pdf"
+    elif output.is_absolute():
+        output_path = output
+    else:
+        output_path = root.resolve() / output
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    navy = colors.HexColor("#132238")
+    blue = colors.HexColor("#1F5A94")
+    slate = colors.HexColor("#4B5563")
+    pale = colors.HexColor("#D7E2EC")
+    styles = getSampleStyleSheet()
+    name_style = ParagraphStyle(
+        "YapplyName",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=20,
+        leading=23,
+        textColor=navy,
+        alignment=TA_CENTER,
+        spaceAfter=3,
+    )
+    contact_style = ParagraphStyle(
+        "YapplyContact",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=8.5,
+        leading=11,
+        textColor=slate,
+        alignment=TA_CENTER,
+        spaceAfter=7,
+    )
+    section_style = ParagraphStyle(
+        "YapplySection",
+        parent=styles["Heading2"],
+        fontName="Helvetica-Bold",
+        fontSize=10.5,
+        leading=12,
+        textColor=blue,
+        spaceBefore=7,
+        spaceAfter=4,
+    )
+    body_style = ParagraphStyle(
+        "YapplyBody",
+        parent=styles["BodyText"],
+        fontName="Helvetica",
+        fontSize=9,
+        leading=12,
+        textColor=navy,
+        alignment=TA_LEFT,
+        spaceAfter=3,
+    )
+    item_title_style = ParagraphStyle(
+        "YapplyItemTitle",
+        parent=body_style,
+        fontName="Helvetica-Bold",
+        leading=11,
+        spaceAfter=0,
+    )
+    item_meta_style = ParagraphStyle(
+        "YapplyItemMeta",
+        parent=body_style,
+        fontSize=8.5,
+        leading=10,
+        textColor=slate,
+        spaceAfter=0,
+    )
+    item_date_style = ParagraphStyle("YapplyItemDate", parent=item_meta_style, alignment=TA_RIGHT)
+    item_org_style = ParagraphStyle("YapplyItemOrg", parent=item_meta_style, spaceBefore=1)
+    bullet_style = ParagraphStyle(
+        "YapplyBullet",
+        parent=body_style,
+        leftIndent=10,
+        firstLineIndent=-8,
+        spaceAfter=2,
+    )
+
+    document = SimpleDocTemplate(
+        str(output_path),
+        pagesize=LETTER,
+        rightMargin=0.62 * inch,
+        leftMargin=0.62 * inch,
+        topMargin=0.52 * inch,
+        bottomMargin=0.52 * inch,
+        title=f"{identity['name']} - Resume",
+        author=identity["name"],
+        subject="Resume generated locally by Yapply",
+    )
+    # SimpleDocTemplate's frame pads text 6 pt on each side; rules and tables must match it.
+    frame_padding = 6
+    content_width = document.width - 2 * frame_padding
+
+    def draw_page(canvas: Any, doc: Any) -> None:
+        canvas.saveState()
+        canvas.setStrokeColor(pale)
+        canvas.setLineWidth(0.5)
+        canvas.line(
+            doc.leftMargin + frame_padding,
+            0.38 * inch,
+            LETTER[0] - doc.rightMargin - frame_padding,
+            0.38 * inch,
+        )
+        canvas.setFillColor(slate)
+        canvas.setFont("Helvetica", 7)
+        canvas.drawRightString(
+            LETTER[0] - doc.rightMargin - frame_padding, 0.24 * inch, f"Page {doc.page}"
+        )
+        canvas.restoreState()
+
+    story: list[Any] = []
+    story.append(Paragraph(escape(identity["name"]), name_style))
+    contact_parts = [
+        value.strip()
+        for value in (
+            identity.get("email", ""),
+            identity.get("phone", ""),
+            identity.get("location", ""),
+            *identity.get("links", []),
+        )
+        if isinstance(value, str) and value.strip()
+    ]
+    story.append(Paragraph(" &nbsp;|&nbsp; ".join(escape(value) for value in contact_parts), contact_style))
+
+    def add_section_heading(label: str) -> None:
+        story.append(Paragraph(escape(label.upper()), section_style))
+        story.append(
+            Table(
+                [[""]],
+                colWidths=[content_width],
+                rowHeights=[1],
+                style=TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, -1), pale),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                        ("TOPPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ]
+                ),
+            )
+        )
+        story.append(Spacer(1, 3))
+
+    add_section_heading("Summary")
+    story.append(Paragraph(escape(resume["summary"]["text"]), body_style))
+
+    if resume.get("skills"):
+        add_section_heading("Skills")
+        story.append(
+            Paragraph(
+                " &nbsp;&bull;&nbsp; ".join(escape(skill["name"]) for skill in resume["skills"]),
+                body_style,
+            )
+        )
+
+    for section in resume.get("sections", []):
+        add_section_heading(section["heading"])
+        for item in section.get("items", []):
+            left_cell = [Paragraph(escape(item["title"]), item_title_style)]
+            if item.get("organization"):
+                left_cell.append(Paragraph(escape(item["organization"]), item_org_style))
+            header = Table(
+                [
+                    [
+                        left_cell,
+                        Paragraph(escape(item.get("date_range", "")), item_date_style),
+                    ]
+                ],
+                colWidths=[content_width * 0.77, content_width * 0.23],
+                style=TableStyle(
+                    [
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                        ("TOPPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+                    ]
+                ),
+            )
+            block: list[Any] = [header]
+            block.extend(
+                Paragraph(f"- {escape(bullet['text'])}", bullet_style)
+                for bullet in item.get("bullets", [])
+            )
+            block.append(Spacer(1, 3))
+            story.append(KeepTogether(block))
+
+    document.build(story, onFirstPage=draw_page, onLaterPages=draw_page)
+    record_event(root, "resume_rendered", {"outcome": "success"})
+    return output_path
+
+
+def create_demo(root: Path, output: Path | None = None) -> Path:
+    """Create and render a synthetic end-to-end workspace for local testing."""
+    base = workspace(root)
+    if base.exists():
+        raise YapplyError(
+            f"Demo requires a new workspace; {base} already exists. Choose another --root directory."
+        )
+    # Check before creating files so a retry after installing ReportLab is not blocked.
+    require_reportlab()
+    initialize(root)
+    write_json(
+        base / "profile.json",
+        {
+            "schema_version": SCHEMA_VERSION,
+            "identity": {
+                "name": "Jordan Lee",
+                "email": "jordan.lee@example.test",
+                "phone": "+1 555 010 2026",
+                "location": "Austin, TX",
+                "links": ["github.com/jordan-example"],
+            },
+            "preferences": {
+                "target_roles": ["Platform Engineer", "Backend Engineer"],
+                "target_locations": ["Austin, TX", "Remote"],
+                "work_authorization": "Authorized to work in the United States",
+                "remote_preference": "any",
+            },
+            "facts": [
+                {
+                    "id": "fact-api-latency",
+                    "category": "experience",
+                    "statement": "Reduced API p95 latency from 420 ms to 180 ms by profiling database queries and adding targeted indexes.",
+                    "evidence": "Synthetic performance report used only for the Yapply demo",
+                    "keywords": ["Python", "PostgreSQL", "performance"],
+                },
+                {
+                    "id": "fact-deployment-pipeline",
+                    "category": "experience",
+                    "statement": "Built a GitHub Actions deployment pipeline with automated tests and rollback checks.",
+                    "evidence": "Synthetic project record used only for the Yapply demo",
+                    "keywords": ["GitHub Actions", "CI/CD", "testing"],
+                },
+                {
+                    "id": "fact-observability",
+                    "category": "project",
+                    "statement": "Created service dashboards and alerts for latency, error rate, and queue depth.",
+                    "evidence": "Synthetic project record used only for the Yapply demo",
+                    "keywords": ["observability", "dashboards", "alerts"],
+                },
+                {
+                    "id": "fact-core-skills",
+                    "category": "skill",
+                    "statement": "Uses Python, SQL, PostgreSQL, Docker, AWS, and GitHub Actions in verified projects.",
+                    "evidence": "Synthetic skills inventory used only for the Yapply demo",
+                    "keywords": ["Python", "SQL", "PostgreSQL", "Docker", "AWS"],
+                },
+            ],
+        },
+    )
+    slug = "northstar-platform-engineer"
+    app_dir = create_application(root, slug)
+    write_json(
+        app_dir / "job.json",
+        {
+            "schema_version": SCHEMA_VERSION,
+            "company": "Northstar Labs",
+            "role": "Platform Engineer",
+            "url": "https://example.test/jobs/platform-engineer",
+            "location": "Austin, TX or Remote",
+            "description": "Synthetic role seeking Python, PostgreSQL, CI/CD, and observability experience.",
+            "captured_at": utc_now(),
+        },
+    )
+    write_json(
+        app_dir / "resume.json",
+        {
+            "schema_version": SCHEMA_VERSION,
+            "summary": {
+                "text": "Platform-focused engineer experienced in improving backend performance, automating delivery, and operating observable services.",
+                "source_fact_ids": [
+                    "fact-api-latency",
+                    "fact-deployment-pipeline",
+                    "fact-observability",
+                ],
+            },
+            "skills": [
+                {"name": "Python", "source_fact_ids": ["fact-core-skills"]},
+                {"name": "PostgreSQL", "source_fact_ids": ["fact-core-skills"]},
+                {"name": "Docker", "source_fact_ids": ["fact-core-skills"]},
+                {"name": "AWS", "source_fact_ids": ["fact-core-skills"]},
+                {"name": "GitHub Actions", "source_fact_ids": ["fact-core-skills"]},
+            ],
+            "sections": [
+                {
+                    "heading": "Selected Experience",
+                    "items": [
+                        {
+                            "title": "Backend Engineering Projects",
+                            "organization": "Synthetic Yapply Demo",
+                            "date_range": "2025 - 2026",
+                            "source_fact_ids": [
+                                "fact-api-latency",
+                                "fact-deployment-pipeline",
+                                "fact-observability",
+                            ],
+                            "bullets": [
+                                {
+                                    "text": "Reduced API p95 latency from 420 ms to 180 ms by profiling database queries and adding targeted indexes.",
+                                    "source_fact_ids": ["fact-api-latency"],
+                                },
+                                {
+                                    "text": "Built a GitHub Actions deployment pipeline with automated tests and rollback checks.",
+                                    "source_fact_ids": ["fact-deployment-pipeline"],
+                                },
+                                {
+                                    "text": "Created service dashboards and alerts for latency, error rate, and queue depth.",
+                                    "source_fact_ids": ["fact-observability"],
+                                },
+                            ],
+                        }
+                    ],
+                }
+            ],
+        },
+    )
+    errors, _ = validate_application(root, slug)
+    if errors:
+        raise YapplyError("Synthetic demo failed validation: " + "; ".join(errors))
+    update_status(root, slug, "ready")
+    return render_resume(root, slug, output)
+
+
 def update_status(root: Path, slug: str, new_status: str) -> tuple[str, str]:
     slug = validate_slug(slug)
     if new_status not in STATUSES:
@@ -673,6 +1044,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_parser.add_argument("slug")
 
+    render_parser = subparsers.add_parser(
+        "render-application", help="Render a validated application resume to PDF"
+    )
+    render_parser.add_argument("slug")
+    render_parser.add_argument(
+        "--output",
+        type=Path,
+        help="PDF output path (default: application output/resume.pdf)",
+    )
+
+    demo_parser = subparsers.add_parser(
+        "demo", help="Create a synthetic workspace and render a sample resume"
+    )
+    demo_parser.add_argument(
+        "--output",
+        type=Path,
+        help="PDF output path (default: demo application output/resume.pdf)",
+    )
+
     track_parser = subparsers.add_parser("track", help="Update an application's status")
     track_parser.add_argument("slug")
     track_parser.add_argument("status", choices=STATUSES)
@@ -738,6 +1128,14 @@ def run(args: argparse.Namespace) -> int:
     if args.command == "validate-application":
         errors, _ = validate_application(root, args.slug)
         return print_validation(errors, f"Application {args.slug}")
+    if args.command == "render-application":
+        output_path = render_resume(root, args.slug, args.output)
+        print(f"Rendered resume to {output_path}.")
+        return 0
+    if args.command == "demo":
+        output_path = create_demo(root, args.output)
+        print(f"Created synthetic demo and rendered {output_path}.")
+        return 0
 
     if args.command == "track":
         previous, current = update_status(root, args.slug, args.status)

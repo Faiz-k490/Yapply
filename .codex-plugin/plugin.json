@@ -1,6 +1,6 @@
 {
   "name": "yapply",
-  "version": "0.1.0",
+  "version": "0.2.0+codex.20260910191252",
   "description": "A local-first, agent-native workflow for finding jobs, preparing grounded applications, and tracking outcomes.",
   "author": {
     "name": "Yapply"
@@ -15,10 +15,11 @@
     "capabilities": [
       "Local files",
       "Job research",
-      "Application tracking"
+      "Application tracking",
+      "PDF rendering"
     ],
     "defaultPrompt": [
-      "Set up my private Yapply workspace.",
+      "Run Yapply's synthetic local demo.",
       "Prepare a grounded application for this role.",
       "Show me the status of my applications."
     ]

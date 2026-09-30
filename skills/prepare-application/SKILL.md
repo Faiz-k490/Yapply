@@ -15,8 +15,8 @@ Create tailored material while maintaining a machine-checkable link to the user'
 4. Choose a lowercase application slug that contains only letters, numbers, and hyphens. Run `create-application <slug>` unless that application already exists.
 5. Write the posting to `.yapply/applications/<slug>/job.json`.
 6. Draft `.yapply/applications/<slug>/resume.json` using the contract in `<plugin-root>/docs/data-contract.md`. Every summary, skill, item, and bullet must include one or more `source_fact_ids`. Tailoring may select and reorder facts or improve wording, but it must not introduce new dates, metrics, tools, titles, credentials, outcomes, or responsibilities.
-7. Run `validate-application <slug>`. Fix every error. Then run `track <slug> ready`.
-8. Show the user the resulting local files and a concise claim-to-source review. Keep the status at `ready` until the user confirms they actually applied.
+7. Run `validate-application <slug>` and fix every error. Run `render-application <slug>` to create the local PDF, visually inspect the result when the host supports it, and correct any layout defect.
+8. Run `track <slug> ready`. Show the user the resulting local files and a concise claim-to-source review. Keep the status at `ready` until the user confirms they actually applied.
 
 ## Guardrails
 
@@ -24,3 +24,4 @@ Create tailored material while maintaining a machine-checkable link to the user'
 - Do not weaken provenance requirements to make validation pass.
 - Do not submit forms, send messages, or mark an application `applied` without explicit user authorization.
 - Never put posting or résumé content into telemetry.
+- If `render-application` reports that ReportLab is missing, ask the user before installing it, use the install command from the error message, and do not add `--break-system-packages` without their approval. The validated `resume.json` is still complete without the PDF.

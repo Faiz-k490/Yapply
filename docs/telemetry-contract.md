@@ -18,5 +18,6 @@ Supported events:
 | `application_created` | `outcome` |
 | `application_validated` | `outcome`, `statement_count_bucket`, `error_count_bucket` |
 | `application_status_changed` | `outcome`, `from_status`, `to_status` |
+| `resume_rendered` | `outcome` |
 
 The configured collector must use HTTPS. The CLI sends a JSON object containing an `events` array and deletes queued events only after a successful 2xx response.
