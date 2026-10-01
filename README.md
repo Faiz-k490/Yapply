@@ -140,9 +140,9 @@ Installed, Yapply adds about 400 tokens to each session, and a skill loads its f
 
 - **Your files stay in your folder.** Everything lives in `.yapply/` inside the directory you choose, and a generated `.gitignore` keeps it out of git.
 - **There is no Yapply server.** The only thing that reads your files is the AI agent you already use, under that provider's terms.
-- **Telemetry is off unless you turn it on.** Even then, events are limited to an allow-list of counts and status changes: no names, companies, job titles, URLs, file paths, or résumé text. You can preview the queue with `yapply telemetry preview`, and `DO_NOT_TRACK=1` overrides everything.
+- **Telemetry is off unless you turn it on.** Even then, events go only to an HTTPS address you choose and are limited to an allow-list of counts and status changes: no names, companies, job titles, URLs, file paths, or résumé text. You can preview the queue with `yapply telemetry preview`, and `DO_NOT_TRACK=1` overrides everything.
 
-The full contract is in [PRIVACY.md](PRIVACY.md) and [docs/telemetry-contract.md](docs/telemetry-contract.md).
+The full contract is in the [Privacy policy](https://github.com/Faiz-k490/Yapply/blob/main/PRIVACY.md) and [docs/telemetry-contract.md](docs/telemetry-contract.md).
 
 ## FAQ
 
