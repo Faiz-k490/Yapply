@@ -7,6 +7,7 @@ import argparse
 import shutil
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 
 
@@ -14,6 +15,7 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 INCLUDED_DIRECTORIES = (
     ".claude-plugin",
     ".codex-plugin",
+    "assets",
     "bin",
     "docs",
     "schemas",
@@ -64,6 +66,27 @@ def copy_bundle(destination: Path, force: bool = False) -> Path:
     return destination
 
 
+def write_upload_zip(bundle: Path, archive: Path, force: bool = False) -> Path:
+    """Zip a built bundle for the OpenAI Plugins Directory, plugin root at the archive root.
+
+    The Claude manifest and the build marker stay out: Claude's directory reads the
+    GitHub repository instead, and OpenAI reads `.codex-plugin/plugin.json`.
+    """
+    archive = archive.expanduser().resolve()
+    if archive.suffix != ".zip":
+        raise ValueError("--zip must name a .zip file")
+    if archive.exists() and not force:
+        raise FileExistsError(f"{archive} already exists; pass --force to replace it")
+    left_out = {".claude-plugin", BUNDLE_MARKER}
+    archive.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as handle:
+        for path in sorted(bundle.rglob("*")):
+            relative = path.relative_to(bundle)
+            if path.is_file() and relative.parts[0] not in left_out:
+                handle.write(path, relative.as_posix())
+    return archive
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -72,14 +95,22 @@ def main(argv: list[str] | None = None) -> int:
         default=SOURCE_ROOT / "dist" / "yapply",
         help="Bundle directory (default: dist/yapply)",
     )
+    parser.add_argument(
+        "--zip",
+        type=Path,
+        help="Also write the OpenAI Plugins Directory upload, such as dist/yapply-openai.zip",
+    )
     parser.add_argument("--force", action="store_true", help="Replace an existing bundle")
     args = parser.parse_args(argv)
     try:
         output = copy_bundle(args.output, args.force)
+        archive = write_upload_zip(output, args.zip, args.force) if args.zip else None
     except (FileExistsError, ValueError, RuntimeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     print(f"Built clean plugin bundle at {output}")
+    if archive:
+        print(f"Wrote OpenAI upload at {archive}")
     return 0
 
 

@@ -31,4 +31,14 @@ claude --plugin-dir dist/yapply
 1. Open an issue first for anything larger than a bug fix.
 2. Keep each pull request to one change, with tests.
 3. Make sure `python3 -m unittest discover -s tests` and `claude plugin validate . --strict` both pass.
-4. If you change the look of the README images, edit `.github/assets/src/card.html` and run `scripts/render_brand_assets.sh`.
+4. If you change the look of the README images or the directory logos, edit `.github/assets/src/card.html` and run `scripts/render_brand_assets.sh`. The composer icon in the assets folder is drawn by hand from the same mark.
+
+## Releasing
+
+Once listed, Claude's plugin directory picks up new commits on `main` by itself. The OpenAI Plugins Directory needs a fresh upload for each release:
+
+```bash
+python3 scripts/build_plugin.py --force --zip dist/yapply-openai.zip
+```
+
+Upload `dist/yapply-openai.zip` at [platform.openai.com/plugins](https://platform.openai.com/plugins).

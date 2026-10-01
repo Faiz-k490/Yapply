@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 10 10" shape-rendering="crispEdges">
+  <style>
+    path { fill: #12141C; }
+    @media (prefers-color-scheme: dark) { path { fill: #D8DBE4; } }
+  </style>
+  <path fill="#12141C" fill-rule="evenodd" d="M0 0h10v10H0zM2.5 2.5h1v1h-1zM6.5 2.5h1v1h-1zM3.5 3.5h1v1h-1zM5.5 3.5h1v1h-1zM4.5 4.5h1v3h-1z"/>
+</svg>

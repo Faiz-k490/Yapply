@@ -46,7 +46,18 @@ Then try the demo, which uses a made-up person, so none of your data is involved
 ```
 
 **Codex.** The same skills ship with a Codex manifest in [`.codex-plugin/`](.codex-plugin/plugin.json).
-<!-- codex-install: Codex install steps go here -->
+Run these in your terminal ([Codex install reference](https://learn.chatgpt.com/docs/developer-commands#codex-plugin)):
+
+```text
+codex plugin marketplace add Faiz-k490/Yapply
+codex plugin add yapply@yapply
+```
+
+Then start a new Codex chat and try the fictional demo:
+
+```text
+$yapply:try-yapply
+```
 
 **You need** Python 3.9 or newer (the one built into macOS works) and, for PDFs, the ReportLab package. If ReportLab is missing, the agent asks before installing it.
 

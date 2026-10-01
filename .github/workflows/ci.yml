@@ -37,3 +37,9 @@ jobs:
       - run: npm install -g @anthropic-ai/claude-code
       - run: claude plugin validate . --strict
       - run: claude plugin validate .claude-plugin/marketplace.json --strict
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: python -m pip install PyYAML==6.0.3
+      - name: Validate Codex plugin without login
+        run: python .github/scripts/codex-plugin-validator/validate_plugin.py .

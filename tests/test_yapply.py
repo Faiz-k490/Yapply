@@ -4,10 +4,12 @@ import importlib.util
 import json
 import os
 import re
+import struct
 import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest import mock
 
@@ -212,6 +214,27 @@ class YapplyTests(unittest.TestCase):
         for excluded in (".git", ".yapply", "tests", "tmp", "output", "__pycache__"):
             self.assertFalse((destination / excluded).exists(), excluded)
 
+    def test_openai_upload_zip_has_plugin_root_and_listing_icons(self) -> None:
+        destination = self.root / "bundle" / "yapply"
+        archive = self.root / "bundle" / "yapply-openai.zip"
+        completed = subprocess.run(
+            [sys.executable, str(BUILD_SCRIPT), "--output", str(destination), "--zip", str(archive)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        with zipfile.ZipFile(archive) as handle:
+            names = set(handle.namelist())
+        self.assertIn(".codex-plugin/plugin.json", names)
+        self.assertIn("scripts/yapply.py", names)
+        manifest = json.loads((REPO_ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+        for field in ("composerIcon", "logo", "logoDark"):
+            self.assertIn(manifest["interface"][field].removeprefix("./"), names)
+        top_level = {name.split("/", 1)[0] for name in names}
+        for excluded in (".claude-plugin", ".yapply-plugin-bundle", ".git", ".yapply", "tests"):
+            self.assertNotIn(excluded, top_level)
+
     def test_plugin_builder_refuses_to_replace_unmarked_directory(self) -> None:
         destination = self.root / "unmarked" / "yapply"
         destination.mkdir(parents=True)
@@ -254,6 +277,46 @@ class RepositoryTests(unittest.TestCase):
         self.assertEqual(codex["version"].split("+")[0], yapply.PLUGIN_VERSION)
         self.assertEqual(claude["name"], codex["name"])
         self.assertIn(claude["name"], [plugin["name"] for plugin in marketplace["plugins"]])
+        codex_marketplace = self.read_manifest(".agents/plugins/marketplace.json")
+        self.assertEqual(codex_marketplace["name"], marketplace["name"])
+        self.assertEqual(len(codex_marketplace["plugins"]), 1)
+        entry = codex_marketplace["plugins"][0]
+        self.assertEqual(entry["name"], codex["name"])
+        self.assertEqual(entry["source"], {"source": "local", "path": "./"})
+        source_manifest = self.read_manifest(
+            str(Path(entry["source"]["path"]) / ".codex-plugin" / "plugin.json")
+        )
+        self.assertEqual(source_manifest["name"], entry["name"])
+        self.assertEqual(source_manifest["version"].split("+")[0], yapply.PLUGIN_VERSION)
+        self.assertEqual(
+            entry["policy"], {"installation": "AVAILABLE", "authentication": "ON_INSTALL"}
+        )
+        self.assertEqual(entry["category"], codex["interface"]["category"])
+
+    def test_codex_listing_fits_the_openai_directory(self) -> None:
+        # Limits from OpenAI's plugin submission guide; its validator doesn't check them.
+        interface = self.read_manifest(".codex-plugin/plugin.json")["interface"]
+        self.assertLessEqual(len(interface["displayName"]), 30)
+        self.assertLessEqual(len(interface["shortDescription"]), 30)
+        self.assertLessEqual(len(interface["longDescription"]), 4000)
+        self.assertLessEqual(len(interface["developerName"]), 80)
+        self.assertLessEqual(len(interface["defaultPrompt"]), 3)
+        for prompt in interface["defaultPrompt"]:
+            self.assertLessEqual(len(prompt), 128)
+        self.assertTrue(interface["privacyPolicyURL"].endswith("/PRIVACY.md"))
+        self.assertTrue((REPO_ROOT / "PRIVACY.md").is_file())
+        # Icons must be square and at least 48x48.
+        for field in ("logo", "logoDark"):
+            png = (REPO_ROOT / interface[field]).read_bytes()
+            self.assertEqual(png[:8], b"\x89PNG\r\n\x1a\n", field)
+            width, height = struct.unpack(">II", png[16:24])
+            self.assertEqual(width, height, field)
+            self.assertGreaterEqual(width, 48, field)
+        svg = (REPO_ROOT / interface["composerIcon"]).read_text(encoding="utf-8")
+        size = re.search(r'<svg[^>]* width="(\d+)" height="(\d+)"', svg)
+        self.assertIsNotNone(size)
+        self.assertEqual(size.group(1), size.group(2))
+        self.assertGreaterEqual(int(size.group(1)), 48)
 
     def test_readme_numbers_match_the_code(self) -> None:
         numbers = self.readme_numbers()

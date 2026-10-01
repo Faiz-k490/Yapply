@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **Install in Codex from GitHub.** A repository marketplace in `.agents/plugins/` makes `codex plugin marketplace add Faiz-k490/Yapply` work.
+- **Ready for the plugin directories.** The Codex manifest now has listing copy, a privacy policy link, and logos drawn from the menu-bar mark. `scripts/build_plugin.py --zip` writes the OpenAI Plugins Directory upload.
+- **Codex checks in CI.** CI runs OpenAI's plugin validator next to `claude plugin validate`.
+
 ## 0.2.0
 
 - **Try it with no personal data.** New `try-yapply` skill and `yapply demo` command build a fictional profile, validate it, and render a sample résumé PDF.

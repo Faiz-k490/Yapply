@@ -1,15 +1,29 @@
 {
   "name": "yapply",
-  "version": "0.2.0+codex.20260910191252",
+  "version": "0.2.0",
   "description": "A local-first, agent-native workflow for finding jobs, preparing grounded applications, and tracking outcomes.",
   "author": {
-    "name": "Yapply"
+    "name": "Yapply",
+    "url": "https://github.com/Faiz-k490/Yapply"
   },
+  "homepage": "https://github.com/Faiz-k490/Yapply",
+  "repository": "https://github.com/Faiz-k490/Yapply",
+  "license": "MIT",
+  "keywords": [
+    "careers",
+    "jobs",
+    "internships",
+    "resume",
+    "applications",
+    "job-search",
+    "local-first",
+    "privacy"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Yapply",
-    "shortDescription": "Run a private, agent-native job search.",
-    "longDescription": "Yapply helps people build a verified career profile, find suitable roles, prepare provenance-backed application materials, and track applications from Codex.",
+    "shortDescription": "Private, grounded job search",
+    "longDescription": "Yapply runs your job search from your agent. Import your résumé or notes once and confirm the facts it finds. Yapply then finds roles that fit and checks eligibility against the live posting. It drafts a cover letter and a tailored résumé where every line cites a fact you verified, and tracks each application from saved to offer.\n\nYour files stay in a local folder you choose. There is no Yapply server and no extra API key. Yapply runs a small Python script on your computer, and that script makes no network requests unless you turn on telemetry. Telemetry is off by default; if you enable it, it sends only anonymous counts and status changes to an HTTPS address you pick. Job searches use your agent's own web search. PDF résumés need the ReportLab package, and the agent asks before installing it.\n\nStart with the built-in demo. It uses a made-up person, so none of your data is involved.",
     "developerName": "Yapply",
     "category": "Productivity",
     "capabilities": [
@@ -18,10 +32,15 @@
       "Application tracking",
       "PDF rendering"
     ],
+    "websiteURL": "https://github.com/Faiz-k490/Yapply",
+    "privacyPolicyURL": "https://github.com/Faiz-k490/Yapply/blob/main/PRIVACY.md",
     "defaultPrompt": [
       "Run Yapply's synthetic local demo.",
       "Prepare a grounded application for this role.",
       "Show me the status of my applications."
-    ]
+    ],
+    "composerIcon": "./assets/composer-icon.svg",
+    "logo": "./assets/logo.png",
+    "logoDark": "./assets/logo-dark.png"
   }
 }
