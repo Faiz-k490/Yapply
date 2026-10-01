@@ -31,3 +31,15 @@ Users can inspect the exact queue with `yapply telemetry preview`, clear it with
 ## Network behavior
 
 The core workflow makes no provider API calls. `yapply telemetry flush` is the only CLI command that sends data, and it only sends previously previewable allow-listed events to the configured HTTPS endpoint.
+
+## Who reads your files
+
+Yapply has no server. The AI agent you run it in, such as Claude Code or Codex, reads and writes the workspace to do what you ask, under that provider's own privacy terms. When you ask for job leads, the agent searches the web with its own tools, and the skills tell it to leave your identity and contact details out of searches.
+
+## Retention
+
+Yapply keeps nothing off your computer. Workspace files stay until you delete them, and deleting the `.yapply` folder removes everything Yapply created. Queued telemetry events are removed from the queue once `yapply telemetry flush` sends them, or when you run `yapply telemetry clear`. How long a telemetry collector keeps events is up to whoever runs the endpoint you chose.
+
+## Contact
+
+Ask privacy questions in [GitHub issues](https://github.com/Faiz-k490/Yapply/issues). Report privacy bugs privately, as described in [SECURITY.md](SECURITY.md).
