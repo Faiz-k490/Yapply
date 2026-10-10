@@ -113,6 +113,36 @@ class YapplyTests(unittest.TestCase):
             },
         )
 
+    def test_application_validation_reports_non_array_profile_facts(self) -> None:
+        self.write_valid_profile()
+        self.write_valid_application()
+        profile = yapply.read_json(self.base / "profile.json")
+        profile["identity"]["email"] = "person@example.test"
+        for invalid in (None, 1, 1.5, True, "facts", {"id": "fact-project-one"}):
+            with self.subTest(facts=invalid):
+                profile["facts"] = invalid
+                yapply.write_json(self.base / "profile.json", profile)
+                errors, _ = yapply.validate_application(self.root, "example-role")
+                self.assertIn("profile: facts must be an array", errors)
+                self.assertTrue(any("unknown fact" in error for error in errors), errors)
+
+    def test_validation_cli_reports_null_facts_without_traceback(self) -> None:
+        self.write_valid_profile()
+        self.write_valid_application()
+        profile = yapply.read_json(self.base / "profile.json")
+        profile["identity"]["email"] = "person@example.test"
+        profile["facts"] = None
+        yapply.write_json(self.base / "profile.json", profile)
+        completed = subprocess.run(
+            [sys.executable, str(SCRIPT), "--root", str(self.root),
+             "validate-application", "example-role"],
+            check=False, capture_output=True, text=True,
+        )
+        output = completed.stdout + completed.stderr
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("profile: facts must be an array", output)
+        self.assertNotIn("Traceback", output)
+
     def test_init_is_private_and_idempotent(self) -> None:
         config_before = yapply.read_json(self.base / "config.json")
         created = yapply.initialize(self.root)

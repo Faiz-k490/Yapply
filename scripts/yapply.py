@@ -500,11 +500,12 @@ def validate_application(root: Path, slug: str) -> tuple[list[str], int]:
     base = require_workspace(root)
     profile = read_json(base / "profile.json")
     profile_errors = validate_profile_data(profile)
+    facts = profile.get("facts") if isinstance(profile, dict) else None
     known_facts = {
         fact.get("id")
-        for fact in profile.get("facts", [])
+        for fact in facts
         if isinstance(fact, dict) and isinstance(fact.get("id"), str)
-    } if isinstance(profile, dict) else set()
+    } if isinstance(facts, list) else set()
     app_dir = base / "applications" / slug
     if not app_dir.is_dir():
         raise YapplyError(f"Unknown application: {slug}")
