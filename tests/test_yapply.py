@@ -249,6 +249,30 @@ class YapplyTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 2)
         self.assertTrue(sentinel.is_file())
 
+    def test_plugin_builder_replaces_output_symlink_without_deleting_its_target(self) -> None:
+        target = self.root / "installed" / "yapply"
+        target.mkdir(parents=True)
+        (target / ".yapply-plugin-bundle").write_text("existing bundle\n", encoding="utf-8")
+        sentinel = target / "keep-me.txt"
+        sentinel.write_text("installed bundle must survive", encoding="utf-8")
+        destination = self.root / "output" / "yapply"
+        destination.parent.mkdir()
+        try:
+            destination.symlink_to(target, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"directory symlinks unavailable: {exc}")
+
+        completed = subprocess.run(
+            [sys.executable, str(BUILD_SCRIPT), "--output", str(destination), "--force"],
+            check=False, capture_output=True, text=True,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertTrue(sentinel.is_file(), "--force deleted the symlink target")
+        self.assertEqual(sentinel.read_text(encoding="utf-8"), "installed bundle must survive")
+        self.assertFalse(destination.is_symlink())
+        self.assertTrue((destination / "scripts" / "yapply.py").is_file())
+
     def test_demo_without_reportlab_creates_nothing(self) -> None:
         demo_root = self.root / "no-reportlab"
         with mock.patch.dict(sys.modules, {"reportlab": None}):
