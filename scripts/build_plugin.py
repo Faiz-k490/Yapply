@@ -26,7 +26,10 @@ BUNDLE_MARKER = ".yapply-plugin-bundle"
 
 
 def copy_bundle(destination: Path, force: bool = False) -> Path:
-    destination = destination.expanduser().resolve()
+    destination = destination.expanduser()
+    # Resolve parent directories without following the output entry itself:
+    # --force replaces an output symlink, never the directory it points at.
+    destination = destination.parent.resolve() / destination.name
     if destination.name != "yapply" or destination == SOURCE_ROOT:
         raise ValueError("Output must be a dedicated directory named 'yapply', such as dist/yapply")
     if destination.exists() or destination.is_symlink():
